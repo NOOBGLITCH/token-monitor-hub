@@ -10,6 +10,7 @@ import {
 import { DEFAULT_STALE_AFTER_MS } from './shared/syncUploadInterval.js';
 import { deviceHistoryRevision, historyPreview, historyRevision } from './shared/history.js';
 import hubBuildIdentity from './shared/hubBuildIdentity.js';
+import { homepageHtml } from './homepage.js';
 
 const CORS_HEADERS = {
   'access-control-allow-origin': '*',
@@ -155,6 +156,13 @@ export class HubDO {
 
   async fetch(request) {
     const url = new URL(request.url);
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && (url.pathname === '/' || url.pathname === '/index.html')) {
+      return new Response(homepageHtml(), {
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store, no-transform', ...CORS_HEADERS }
+      });
+    }
 
     if (url.pathname === '/api/health') {
       const devices = await this.listDevices();
