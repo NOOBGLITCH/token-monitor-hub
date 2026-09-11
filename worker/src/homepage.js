@@ -46,7 +46,7 @@ export function homepageHtml() {
   .table tbody tr { border-color: rgba(148,163,184,.08); }
   .table tbody tr:hover { background: rgba(34,211,238,.05); }
   #spark polyline { stroke: var(--neon); filter: drop-shadow(0 0 6px rgba(34,211,238,.7)); fill: none; stroke-width: 2; }
-  #heatTip { position: fixed; z-index: 50; pointer-events: none; }
+  #heatTip { position: fixed; z-index: 50; pointer-events: none; max-width: 230px; }
   .hcell { cursor: default; border: 1px solid transparent; border-radius: 3px; }
   .hcell:hover { border-color: #fff; transform: scale(1.3); box-shadow: 0 0 10px rgba(57,211,83,.8); }
   ::-webkit-scrollbar { height: 8px; width: 8px; }
@@ -161,7 +161,7 @@ export function homepageHtml() {
     </div>
     <div class="overflow-x-auto"><div id="heatmap" class="flex gap-1 py-1"></div></div>
     <p id="heatTotal" class="text-xs opacity-60"></p>
-    <div id="heatTip" class="card bg-base-100 shadow-xl border border-base-300 px-3 py-2 text-xs hidden"></div>
+  </div></div>
   </div></div>
 
   <div class="card bg-base-100 shadow"><div class="card-body">
@@ -184,6 +184,7 @@ export function homepageHtml() {
 
   <p class="text-center text-xs opacity-50 pb-6">Token Monitor Hub · data refreshes live over SSE · secret never leaves this browser except to this hub</p>
 </main>
+<div id="heatTip" class="card bg-base-100 shadow-2xl border border-cyan-400/40 px-3 py-2 text-xs hidden" style="z-index:100"></div>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -235,6 +236,7 @@ function setLive(on) {
 let period = 'month';
 let lastStats = null;
 let lastSyncAt = 0;
+let sparkDays = [];
 const PERIOD_LABEL = { today: 'today', week: 'this week', month: 'month', allTime: 'all time' };
 
 function weekRollup() {
@@ -388,6 +390,7 @@ function render(stats) {
   renderActivity(stats);
 
   const daily = (stats.historyPreview && stats.historyPreview.daily) || [];
+  sparkDays = daily;
   const pts = daily.map((d) => Number(d.tokens) || 0);
   const peak = Math.max(1, ...pts);
   $('spark').innerHTML = pts.length > 1
@@ -457,6 +460,19 @@ function heatTipShow(e) {
   tip.style.top = (e.clientY + pad) + 'px';
 }
 function heatTipHide() { $('heatTip').classList.add('hidden'); }
+
+function sparkHover(e) {
+  const tip = $('heatTip');
+  if (!sparkDays.length) { tip.classList.add('hidden'); return; }
+  const r = $('spark').getBoundingClientRect();
+  const i = Math.max(0, Math.min(sparkDays.length - 1, Math.round((e.clientX - r.left) / Math.max(1, r.width) * (sparkDays.length - 1))));
+  const d = sparkDays[i] || {};
+  tip.innerHTML = '<b>' + esc(String(d.date || '').slice(0, 10)) + '</b><br><span class="num">' +
+    esc(fmtTokens(d.tokens)) + ' tokens · ' + esc(fmtCost(d.cost)) + '</span>';
+  tip.classList.remove('hidden');
+  tip.style.left = Math.min(window.innerWidth - 190, e.clientX + 12) + 'px';
+  tip.style.top = (e.clientY + 12) + 'px';
+}
 
 function renderHistory(hist) {
   const daily = ((hist && hist.daily) || []).filter((d) => d && d.date);
@@ -584,6 +600,8 @@ $('themeBtn').addEventListener('click', () => {
 if (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.dataset.theme = 'light';
 $('heatmap').addEventListener('mousemove', heatTipShow);
 $('heatmap').addEventListener('mouseleave', heatTipHide);
+$('spark').addEventListener('mousemove', sparkHover);
+$('spark').addEventListener('mouseleave', heatTipHide);
 setInterval(() => {
   $('syncAge').textContent = lastSyncAt ? 'synced ' + ago(new Date(lastSyncAt).toISOString()) : '—';
 }, 5000);
