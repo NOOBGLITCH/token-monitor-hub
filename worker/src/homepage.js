@@ -488,7 +488,7 @@ function renderHistory(hist) {
   }
   $('wTokens').textContent = fmtTokens(wt);
   $('wCost').textContent = fmtCost(wc);
-  const yest = byDay.get(dayKey(new Date(today.getTime() - 86400000)));
+  const yest = byDay.get(dayKey(new Date(Date.now() - 86400000)));
   $('yTokens').textContent = fmtTokens(Number(yest?.tokens) || 0);
   $('yCost').textContent = fmtCost(Number(yest?.cost) || 0);
   const today = new Date();
