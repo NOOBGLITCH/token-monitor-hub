@@ -5,6 +5,7 @@
 
 const antigravityOAuth = require('./oauth');
 const antigravityProbe = require('./probe');
+const cliUsage = require('./cliUsage');
 const {
   normalizeLimitProvider
 } = require('../../limits/core');
@@ -81,6 +82,25 @@ function antigravityAccountError(account, error, nowMs) {
   });
 }
 
+function hasQuotaWindows(provider) {
+  return Boolean(provider)
+    && provider.status === 'ok'
+    && Array.isArray(provider.windows)
+    && provider.windows.length > 0;
+}
+
+// CLI quota (`agy -p /usage`) fills the gap when neither OAuth accounts nor
+// the RPC probe produced a live quota row. Every failure (no binary, signed
+// out, spawn error, unparseable output) is a skip, never an error row.
+async function tryAgyCliProvider(deps, nowMs) {
+  try {
+    const snapshot = await cliUsage.fetchAgyCliSnapshot(deps);
+    return mapAntigravitySnapshot(snapshot, { nowMs, source: 'cli', account: { id: 'cli' } });
+  } catch (_) {
+    return null;
+  }
+}
+
 async function fetchAntigravityLimits(options = {}, deps = {}) {
   const nowMs = (deps.now || Date.now)();
   const probeFn = deps.antigravityProbe || antigravityProbe.probe;
@@ -95,10 +115,11 @@ async function fetchAntigravityLimits(options = {}, deps = {}) {
       && (!scope.accountEmail || scope.accountEmail === account.accountEmail));
 
   if (accounts.length === 0 && !scope) {
+    let rpc;
     try {
-      return mapAntigravitySnapshot(await probeFn(deps), { nowMs, source: 'rpc' });
+      rpc = mapAntigravitySnapshot(await probeFn(deps), { nowMs, source: 'rpc' });
     } catch (error) {
-      return normalizeLimitProvider({
+      rpc = normalizeLimitProvider({
         provider: 'antigravity',
         accountKey: '',
         accountLabel: '',
@@ -108,6 +129,8 @@ async function fetchAntigravityLimits(options = {}, deps = {}) {
         windows: []
       });
     }
+    if (hasQuotaWindows(rpc)) return rpc;
+    return (await tryAgyCliProvider(deps, nowMs)) || rpc;
   }
 
   const localPromise = scope?.sourceDetail === 'oauth'
@@ -137,6 +160,10 @@ async function fetchAntigravityLimits(options = {}, deps = {}) {
     const duplicateIndex = providers.findIndex((provider) => provider.accountKey === local.accountKey);
     if (duplicateIndex >= 0) providers.splice(duplicateIndex, 1, local);
     else providers.unshift(local);
+  }
+  if (!providers.some(hasQuotaWindows)) {
+    const cli = await tryAgyCliProvider(deps, nowMs);
+    if (hasQuotaWindows(cli)) providers.unshift(cli);
   }
   return providers;
 }
