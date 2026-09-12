@@ -410,11 +410,15 @@ function render(stats) {
   const provs = (stats.limits && stats.limits.providers) || [];  $('limits').innerHTML = provs.length ? provs.map((pr) =>
     '<div><div class="flex justify-between text-sm mb-1"><span class="font-medium">' + esc(pr.provider) + '</span>' +
     '<span class="opacity-60 text-xs">' + esc(pr.status || '') + (pr.stale ? ' · stale' : '') + '</span></div>' +
-    (pr.windows || []).map((w) =>
-      '<div class="flex items-center gap-2 text-xs"><span class="w-20 opacity-60">' + esc(w.kind || '') + '</span>' +
-      '<progress class="progress progress-accent flex-1" value="' + Number(w.usedPercent || 0) + '" max="100"></progress>' +
-      '<span class="num w-12 text-right">' + esc(Number(w.usedPercent || 0)) + '%</span></div>'
-    ).join('') + '</div>'
+    (pr.windows || []).map((w) => {
+      const used = Math.round(Math.max(0, Math.min(100, Number(w.usedPercent) || 0)) * 10) / 10;
+      const left = Math.round((100 - used) * 10) / 10;
+      const resetMs = Date.parse(w.resetsAt || '');
+      const reset = Number.isFinite(resetMs) ? ' · resets ' + shortDate(new Date(resetMs)) : '';
+      return '<div class="flex items-center gap-2 text-xs"><span class="w-28 opacity-60">' + esc(w.label || w.kind || '') + '</span>' +
+      '<progress class="progress progress-accent flex-1" value="' + used + '" max="100"></progress>' +
+      '<span class="num whitespace-nowrap">' + used + '% used · ' + left + '% left' + esc(reset) + '</span></div>';
+    }).join('') + '</div>'
   ).join('') : '<p class="opacity-60 text-sm">No limits reported.</p>';
   icons();
 }
