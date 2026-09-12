@@ -143,11 +143,6 @@ export function homepageHtml() {
   </div></div>
 
   <div class="card bg-base-100 shadow"><div class="card-body">
-    <h2 class="card-title gap-2"><i data-lucide="wallet" class="w-5 h-5"></i>Subscriptions</h2>
-    <div id="subs"><p class="opacity-60 text-sm">Connect with the hub secret to load.</p></div>
-  </div></div>
-
-  <div class="card bg-base-100 shadow"><div class="card-body">
     <h2 class="card-title gap-2"><i data-lucide="chart-line" class="w-5 h-5"></i>Daily tokens <span class="text-sm font-normal opacity-60">(30d)</span></h2>
     <svg id="spark" viewBox="0 0 300 80" class="w-full h-20 text-primary" preserveAspectRatio="none"></svg>
   </div></div>
@@ -346,23 +341,6 @@ function renderActivity(stats) {
     '<div class="stat bg-base-200 rounded-box px-4 py-2"><div class="stat-title flex items-center gap-1 text-xs"><i data-lucide="' + ic + '" class="w-3 h-3"></i>' + esc(label) +
     '</div><div class="stat-value text-lg num break-all">' + esc(String(val)) + '</div></div>'
   ).join('');
-}
-
-function renderSubs(doc) {
-  const list = (doc && doc.subscriptions) || [];
-  if (!list.length) {
-    $('subs').innerHTML = '<p class="opacity-60 text-sm">No subscriptions recorded.</p>';
-    icons();
-    return;
-  }
-  $('subs').innerHTML = '<div class="overflow-x-auto"><table class="table table-sm"><thead><tr><th>Provider</th><th>Plan</th><th class="text-right">Amount</th><th>Renews</th></tr></thead><tbody>' +
-    list.map((s) =>
-      '<tr><td class="font-medium">' + esc(s.provider || '') + '</td>' +
-      '<td class="text-xs">' + esc(s.planName || s.kind || '') + '</td>' +
-      '<td class="text-right num">' + esc(fmtCost((Number(s.amountMinor) || 0) / 100)) + ' ' + esc(s.currency || '') + '</td>' +
-      '<td class="text-xs">' + esc(s.nextRenewalOverride || '') + '</td></tr>'
-    ).join('') + '</tbody></table></div>';
-  icons();
 }
 
 function render(stats) {
@@ -578,10 +556,6 @@ async function connect() {
         const r = await fetch('/api/history', { headers: { authorization: 'Bearer ' + secret } });
         if (r.ok) renderHistory(await r.json());
       } catch (_) { renderHistory(null); }
-      try {
-        const r = await fetch('/api/subscriptions', { headers: { authorization: 'Bearer ' + secret } });
-        if (r.ok) renderSubs(await r.json());
-      } catch (_) {}
     } else {
       renderHistory(null);
     }
