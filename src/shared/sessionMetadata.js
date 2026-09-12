@@ -6,6 +6,7 @@ const { hashKey } = require('./hashKey');
 const claudeSessionMetadata = require('./providers/claude/sessionMetadata');
 const codexSession = require('./providers/codex/sessionMetadata');
 const opencodeSession = require('./providers/opencode/session');
+const antigravitySessionMetadata = require('./providers/antigravity/sessionMetadata');
 const kimiSessionMetadata = require('./providers/kimi/sessionMetadata');
 const dshSessionMetadata = require('./providers/dsh/sessionMetadata');
 
@@ -148,6 +149,7 @@ function fileSessionMetadata(sessionId, filePath, context, existing = {}) {
 // existing one-shot id-timestamp fallback.
 const SESSION_METADATA_RESOLVERS = new Map([
   ['opencode', { resolve: opencodeSession.resolveSessionMetadata, retryAfterTimestampFallback: true }],
+  ['antigravity', { resolve: antigravitySessionMetadata.resolveSessionMetadata, retryAfterTimestampFallback: true }],
   ['claude', { resolve: claudeSessionMetadata.resolveSessionMetadata, retryAfterTimestampFallback: true }],
   ['codex', { resolve: codexSession.resolveSessionMetadata, retryAfterTimestampFallback: true }],
   ['kimi', { resolve: kimiSessionMetadata.resolveSessionMetadata, retryAfterTimestampFallback: false }],

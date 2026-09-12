@@ -137,7 +137,7 @@ export function homepageHtml() {
   <div id="sessionsCard" class="card bg-base-100 shadow hidden"><div class="card-body">
     <h2 class="card-title gap-2"><i data-lucide="messages-square" class="w-5 h-5"></i>Top sessions <span id="sessPeriod" class="text-sm font-normal opacity-60">(month)</span></h2>
     <div class="overflow-x-auto"><table class="table table-sm">
-      <thead><tr><th>Session</th><th>Client</th><th class="text-right">Tokens</th><th class="text-right">Cost</th></tr></thead>
+      <thead><tr><th>Session</th><th>Client</th><th>Date</th><th class="text-right">Tokens</th><th class="text-right">Cost</th></tr></thead>
       <tbody id="sessions"></tbody>
     </table></div>
   </div></div>
@@ -321,6 +321,7 @@ function renderPeriodBlocks() {
   $('sessions').innerHTML = srows.map(({ k, s }) =>
     '<tr><td class="break-all"><span class="font-medium">' + esc(s.title || s.sessionId || k) + '</span></td>' +
     '<td class="text-xs">' + esc(s.client || '') + '</td>' +
+    '<td class="text-xs whitespace-nowrap">' + esc(fmtDate(s.lastUsedAt || s.startedAt)) + '</td>' +
     '<td class="text-right num">' + esc(fmtTokens(s.totalTokens)) + '</td>' +
     '<td class="text-right num">' + esc(fmtCost(s.costUsd)) + '</td></tr>'
   ).join('');
@@ -415,6 +416,13 @@ function dayKey(d) {
 }
 function shortDate(d) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+const DATE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function fmtDate(iso) {
+  const ms = Date.parse(iso || '');
+  if (!Number.isFinite(ms)) return '—';
+  const d = new Date(ms);
+  return String(d.getDate()).padStart(2, '0') + ' ' + DATE_MONTHS[d.getMonth()] + ' ' + d.getFullYear();
 }
 function fmtDuration(ms) {
   ms = Number(ms) || 0;
