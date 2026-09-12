@@ -70,11 +70,16 @@ export function homepageHtml() {
   <div id="err" class="alert alert-error hidden"><i data-lucide="triangle-alert" class="w-5 h-5"></i><span id="errMsg"></span></div>
   <div id="staleBanner" class="alert hidden"><i data-lucide="cloud-off" class="w-5 h-5"></i><span id="staleMsg"></span></div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
     <div class="card bg-base-100 shadow"><div class="card-body">
       <h2 class="card-title text-sm opacity-70 gap-2"><i data-lucide="zap" class="w-4 h-4"></i>Today</h2>
       <p id="tTokens" class="text-3xl font-bold num">—</p>
       <p id="tCost" class="opacity-70 num">—</p>
+    </div></div>
+    <div class="card bg-base-100 shadow"><div class="card-body">
+      <h2 class="card-title text-sm opacity-70 gap-2"><i data-lucide="history" class="w-4 h-4"></i>Yesterday</h2>
+      <p id="yTokens" class="text-3xl font-bold num">—</p>
+      <p id="yCost" class="opacity-70 num">—</p>
     </div></div>
     <div class="card bg-base-100 shadow"><div class="card-body">
       <h2 class="card-title text-sm opacity-70 gap-2"><i data-lucide="calendar-range" class="w-4 h-4"></i>This week</h2>
@@ -483,6 +488,9 @@ function renderHistory(hist) {
   }
   $('wTokens').textContent = fmtTokens(wt);
   $('wCost').textContent = fmtCost(wc);
+  const yest = byDay.get(dayKey(new Date(today.getTime() - 86400000)));
+  $('yTokens').textContent = fmtTokens(Number(yest?.tokens) || 0);
+  $('yCost').textContent = fmtCost(Number(yest?.cost) || 0);
   const today = new Date();
   const startMon = mondayOf(new Date(today.getTime() - 25 * 7 * 86400000));
   const max = Math.max(1, ...daily.map((d) => Number(d.tokens) || 0));
