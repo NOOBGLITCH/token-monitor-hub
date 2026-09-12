@@ -2897,6 +2897,18 @@ function startCollector(options) {
           // could be stale for clients that changed while the app was down.
           todayPartitions: null
         };
+        // Heal persisted enrichment in place: session decoration may have
+        // improved since this anchor was written (new resolvers), and warm
+        // ticks derive month/allTime from the anchor without re-decorating.
+        // Without this, a restarted collector inherits dateless sessions until
+        // the next full scan. One stat-bounded pass; failures keep the anchor.
+        try {
+          applySessionMetadata(
+            { today: anchor.today, month: anchor.month, allTime: anchor.allTime },
+            options.homeDir || os.homedir(),
+            { resolveProjects: options.projectsEnabled !== false }
+          );
+        } catch (_) {}
         // Don't restore a persisted WSL snapshot when WSL scanning is now off —
         // the configFingerprint intentionally ignores the toggle (host periods
         // stay valid), so without this gate a warm-scan preview would briefly
